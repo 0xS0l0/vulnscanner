@@ -3,33 +3,20 @@ from pprint import pprint
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
 
+# Set up a session with a user agent
 s = requests.Session()
 s.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36"
 
+# Commented out login code for DVWA
+# ...
 
-# Login to DVWA
-
-"""
-login_payload = {
-    "username": "admin",
-    "password": "password",
-    "Login": "Login",
-}
-login_url = "http://localhost:8080/DVWA-master/login.php"
-r = s.get(login_url)
-soup = bs(r.content, "html.parser")
-token = soup.find("input", {"name": "user_token"}).get("value")
-login_payload['user_token'] = token
-s.post(login_url, data=login_payload)
-
-"""
-
+# Function to get all HTML forms from a given URL
 def get_all_forms(url):
     """Given a `url`, it returns all forms from the HTML content"""
     soup = bs(s.get(url).content, "html.parser")
     return soup.find_all("form")
 
-
+# Function to extract form details
 def get_form_details(form):
     """
     This function extracts all possible useful information about an HTML `form`
@@ -47,7 +34,7 @@ def get_form_details(form):
     details["inputs"] = inputs
     return details
 
-
+# Function to check for common SQL injection error messages
 def is_vulnerable(response):
     """A simple boolean function that determines whether a page 
     is SQL Injection vulnerable from its `response`"""
@@ -62,12 +49,13 @@ def is_vulnerable(response):
             return True
     return False
 
+# Function to submit a form with a given payload
 def submit_form(form_details, url, value):
     """
     Submits a form given in `form_details`
     Params:
-        form_details (list): a dictionary that contain form information
-        url (str): the original URL that contain that form
+        form_details (list): a dictionary that contains form information
+        url (str): the original URL that contains that form
         value (str): this will be replaced to all text and search inputs
     Returns the HTTP Response after form submission
     """
@@ -89,6 +77,7 @@ def submit_form(form_details, url, value):
     else:
         return s.get(target_url, params=data)
 
+# Function to scan for XSS vulnerabilities
 def scan_xss(url):
     forms = get_all_forms(url)
     print(f"[+] Detected {len(forms)} forms on {url}.")
@@ -104,6 +93,7 @@ def scan_xss(url):
             is_vulnerable = True
     return is_vulnerable
 
+# Function to scan for SQL Injection vulnerabilities
 def scan_sql_injection(url):
     for c in "\"'":
         new_url = f"{url}{c}"
@@ -137,6 +127,7 @@ def scan_sql_injection(url):
                 pprint(form_details)
                 break   
 
+# Main execution block
 if __name__ == "__main__":
     url = input("Enter the URL: ")
     print("\n[+] Scanning for XSS vulnerabilities:\n")
