@@ -1,139 +1,125 @@
 import requests
-from pprint import pprint
-from bs4 import BeautifulSoup as bs
+import re
+from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
-# Set up a session with a user agent
-s = requests.Session()
-s.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36"
 
-# Commented out login code for DVWA
-# ...
+def scan_website(url):
+    # Step 1: Discover URLs on the website
+    discovered_urls = discover_urls(url)
+    print(f"Discovered {len(discovered_urls)} URLs on {url}:\n")
+    for i, discovered_url in enumerate(discovered_urls, start=1):
+        print(f"{i}. {discovered_url}")
 
-# Function to get all HTML forms from a given URL
-def get_all_forms(url):
-    """Given a `url`, it returns all forms from the HTML content"""
-    soup = bs(s.get(url).content, "html.parser")
-    return soup.find_all("form")
+    # Step 2: Scan discovered URLs for vulnerabilities
+    for page_url in discovered_urls:
+        vulnerabilities = scan_url(page_url)
+        if vulnerabilities:
+            print(f"\nVulnerabilities found on {page_url}:")
+            for vulnerability, attack_method in vulnerabilities.items():
+                print(f"\nVulnerability: {vulnerability}")
+                print(f"Attack Method: {attack_method}")
 
-# Function to extract form details
-def get_form_details(form):
-    """
-    This function extracts all possible useful information about an HTML `form`
-    """
-    details = {}
-    action = form.attrs.get("action", "").lower()
-    method = form.attrs.get("method", "get").lower()
-    inputs = []
-    for input_tag in form.find_all("input"):
-        input_type = input_tag.attrs.get("type", "text")
-        input_name = input_tag.attrs.get("name")
-        inputs.append({"type": input_type, "name": input_name})
-    details["action"] = action
-    details["method"] = method
-    details["inputs"] = inputs
-    return details
 
-# Function to check for common SQL injection error messages
-def is_vulnerable(response):
-    """A simple boolean function that determines whether a page 
-    is SQL Injection vulnerable from its `response`"""
-    errors = {
-        "you have an error in your sql syntax;",
-        "warning: mysql",
-        "unclosed quotation mark after the character string",
-        "quoted string not properly terminated",
-    }
-    for error in errors:
-        if error in response.content.decode().lower():
-            return True
+def discover_urls(url):
+    discovered_urls = []
+
+    # Send a GET request to the given URL
+    response = requests.get(url)
+    if response.status_code == 200:
+        # Parse the HTML content of the response
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Find all anchor tags and extract URLs
+        for anchor_tag in soup.find_all("a"):
+            href = anchor_tag.get("href")
+            if href:
+                absolute_url = urljoin(url, href)
+                # Filter out non-HTTP(S) URLs and other invalid URLs
+                if absolute_url.startswith("http://") or absolute_url.startswith("https://"):
+                    discovered_urls.append(absolute_url)
+
+    return discovered_urls
+
+
+
+def scan_url(url):
+    vulnerabilities = {}
+
+    # Step 1: Perform vulnerability scans using a vulnerability scanner or custom checks
+
+    # Example: Check for SQL injection vulnerability
+    if is_sql_injection_vulnerable(url):
+        vulnerabilities["SQL injection vulnerability"] = "Injecting SQL code into input fields"
+
+    # Example: Check for cross-site scripting (XSS) vulnerability
+    if is_xss_vulnerable(url):
+        vulnerabilities["Cross-site scripting (XSS) vulnerability"] = "Injecting malicious scripts into input fields"
+    
+    #Example: Check for command injection vulnerability
+    if is_cmdi_vulnerable(url):
+        vulnerabilities["Command injection vulnerability"] = "Injecting commands into input fields"
+    
+    # Step 2: Perform additional vulnerability checks or manual code review
+
+    # Example: Check for insecure server configuration
+    if has_insecure_configuration(url):
+        vulnerabilities["Insecure server configuration"] = "Exploiting insecure communication protocols"
+
+    return vulnerabilities
+
+
+def is_sql_injection_vulnerable(url):
+    # Perform checks for SQL injection vulnerability
+    # Example: Send a malicious SQL query and check the response
+    payload = "' OR '1'='1"
+    response = requests.get(url + "?id=" + payload)
+    if re.search(r"error|warning", response.text, re.IGNORECASE):
+        return True
     return False
 
-# Function to submit a form with a given payload
-def submit_form(form_details, url, value):
-    """
-    Submits a form given in `form_details`
-    Params:
-        form_details (list): a dictionary that contains form information
-        url (str): the original URL that contains that form
-        value (str): this will be replaced to all text and search inputs
-    Returns the HTTP Response after form submission
-    """
-    target_url = urljoin(url, form_details["action"])
-    inputs = form_details["inputs"]
-    data = {}
-    for input in inputs:
-        if input["type"] == "text" or input["type"] == "search":
-            input["value"] = value
-        input_name = input.get("name")
-        input_value = input.get("value")
-        if input_name and input_value:
-            data[input_name] = input_value
 
-    print(f"[+] Submitting malicious payload to {target_url}")
-    print(f"[+] Data: {data}")
-    if form_details["method"] == "post":
-        return s.post(target_url, data=data)
-    else:
-        return s.get(target_url, params=data)
+def is_xss_vulnerable(url):
+    # Perform checks for cross-site scripting (XSS) vulnerability
+    # Example: Inject a script tag and check if it gets executed
+    payload = "<script>alert('XSS')</script>"
+    response = requests.get(url + "?input=" + payload)
+    if payload in response.text:
+        return True
+    return False
 
-# Function to scan for XSS vulnerabilities
-def scan_xss(url):
-    forms = get_all_forms(url)
-    print(f"[+] Detected {len(forms)} forms on {url}.")
-    js_script = "<Script>alert('hi')</scripT>"
-    is_vulnerable = False
-    for form in forms:
-        form_details = get_form_details(form)
-        content = submit_form(form_details, url, js_script).content.decode()
-        if js_script in content:
-            print(f"\n[+] XSS Detected on {url}\n")
-            print(f"[*] Form details:")
-            print(form_details)
-            is_vulnerable = True
-    return is_vulnerable
 
-# Function to scan for SQL Injection vulnerabilities
-def scan_sql_injection(url):
-    for c in "\"'":
-        new_url = f"{url}{c}"
-        print("[!] Trying", new_url)
-        res = s.get(new_url)
-        if is_vulnerable(res):
-            print("\n[+] SQL Injection vulnerability detected, link:\n", new_url)
-            return
-    forms = get_all_forms(url)
-    print(f"[+] Detected {len(forms)} forms on {url}.")
-    for form in forms:
-        form_details = get_form_details(form)
-        for c in "\"'":
-            data = {}
-            for input_tag in form_details["inputs"]:
-                if input_tag["value"] or input_tag["type"] == "hidden":
-                    try:
-                        data[input_tag["name"]] = input_tag["value"] + c
-                    except:
-                        pass
-                elif input_tag["type"] != "submit":
-                    data[input_tag["name"]] = f"test{c}"
-            url = urljoin(url, form_details["action"])
-            if form_details["method"] == "post":
-                res = s.post(url, data=data)
-            elif form_details["method"] == "get":
-                res = s.get(url, params=data)
-            if is_vulnerable(res):
-                print("\n[+] SQL Injection vulnerability detected, link:\n", url)
-                print("[+] Form:")
-                pprint(form_details)
-                break   
+def is_cmdi_vulnerable(url):
+    # Perform checks for command injection vulnerability
+    # Example: Send commands and check the response
+    response = requests.get(url)
 
-# Main execution block
-if __name__ == "__main__":
-    url = input("Enter the URL: ")
-    print("\n[+] Scanning for XSS vulnerabilities:\n")
-    if scan_xss(url):
-        print("\n[+] XSS vulnerabilities found.\n")
-    else:
-        print("[+] No XSS vulnerabilities found.")
-    print("\n[+] Scanning for SQL Injection vulnerabilities:\n")
-    scan_sql_injection(url)
+    payloads = [";ls", ";whoami", ";id"]  # Add more payloads as needed
+
+    # Iterate over each payload
+    for payload in payloads:
+        # Inject the payload into the URL
+        injected_url = url + f"?param={payload}"
+
+        # Make a request with the injected URL
+        injected_response = requests.get(injected_url)
+
+        # Check if the payload resulted in any changes
+        if injected_response.text != response.text:
+            return True  # Vulnerability detected
+
+    return False  # No vulnerability detected
+
+    
+    
+def has_insecure_configuration(url):
+    # Perform checks for insecure server configuration
+    # Example: Check if the website uses HTTP instead of HTTPS
+    if not url.startswith("https"):
+        return True
+    return False
+
+
+# Get user input for the website URL
+url = input("Enter the URL of the website to scan: ")
+scan_website(url)
