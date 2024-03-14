@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scan Results</title>
+</head>
+<body>
+    <h1>Scan Results</h1>
+    <h2>Discovered URLs</h2>
+    <ul>
+        {% for url in results.discovered_urls %}
+            <li>{{ url }}</li>
+        {% endfor %}
+    </ul>
+    <h2>Vulnerabilities</h2>
+    {% for page_url, vulnerabilities in results.vulnerabilities.items() %}
+        <h3>Vulnerabilities found on {{ page_url }}</h3>
+        <ul>
+            {% for vulnerability, attack_method in vulnerabilities.items() %}
+                <li>Vulnerability: {{ vulnerability }}</li>
+                <li>Attack Method: {{ attack_method }}</li>
+            {% endfor %}
+        </ul>
+    {% endfor %}
+</body>
+</html>
+
