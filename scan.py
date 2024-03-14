@@ -121,5 +121,5 @@ def has_insecure_configuration(url):
 
 
 # Get user input for the website URL
-url = input("Enter the URL of the website to scan: ")
-scan_website(url)
+#url = input("Enter the URL of the website to scan: ")
+#scan_website(url)
