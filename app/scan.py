@@ -2,8 +2,8 @@ import requests, re, html
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlparse
-
-
+from sql_scanner import is_sqli_vulnerable
+from xss_scanner import is_xss_vulnerable
 
 
 def scan_website(url):
@@ -79,22 +79,6 @@ def scan_url(url):
 
     return vulnerabilities
 
-def is_xss_vulnerable(url):
-    # Regular expression to match potential XSS patterns
-    xss_patterns = [
-        r'<script.*?>.*?</script>',   # Matches <script> tags
-        r'on\w+=".*?"',               # Matches event handler attributes
-        r'<.*?javascript:.*?>',       # Matches JavaScript URIs
-        r'alert\(.*?\)'               # Matches JavaScript alert functions
-    ]
-
-    # Check if any XSS pattern is found in the URL parameter
-    for pattern in xss_patterns:
-        if re.search(pattern, url, re.IGNORECASE):
-            return True  # XSS vulnerability detected
-
-    return False  # No XSS vulnerability detected
-
 def is_cmdi_vulnerable(url):
         payload =';echo ADD-CMD$((80+20))$(echo 0xsolo)0xsolo'
         poc = "ADD-CMD1000xsolo0xsolo"
@@ -114,17 +98,6 @@ def is_cmdi_vulnerable(url):
                                 #logs.create_log(logs_des,"No HTML Injection Found  : "+str(url))
                                 return False
                             
-                            
-
-def is_sqli_vulnerable(url):
-    # Perform checks for SQL injection vulnerability
-    # Example: Send a malicious SQL query and check the response
-    payload = "' OR '1'='1"
-    response = requests.get(url + "?id=" + payload)
-    if re.search(r"error in your SQL syntax|warning", response.text, re.IGNORECASE):
-        return True
-    return False
-
 def has_insecure_configuration(url):
     # Perform checks for insecure server configuration
     # Example: Check if the website uses HTTP instead of HTTPS
