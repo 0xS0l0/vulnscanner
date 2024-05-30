@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scan Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            position: relative; /* Ensure body is positioned relative */
+        }
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        .scan-results {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+        .home-button {
+            position: absolute; /* Position absolute to the body */
+            top: 20px; /* 20px from the top */
+            left: 40px; /* 20px from the left */
+
+        }
+        .home-button a {
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        .home-button a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="scan-results">
+        <h1>Scan Results</h1>
+        <h2>Scanned URL</h2>
+        <p>{{ results.scanned_url }}</p>
+        <h2>Vulnerabilities</h2>
+        {% if results.vulnerabilities %}
+            <ul>
+                {% for vulnerability in results.vulnerabilities %}
+                    <li>{{ vulnerability }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No vulnerabilities found. This URL is not vulnerable.</p>
+        {% endif %}
+    </div>
+    <!-- Home Button -->
+    <div class="home-button">
+        <a href="/">Home</a>
+    </div>
+</body>
+</html>
+
+
