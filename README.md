@@ -1,2 +1,2 @@
 # WEB VULNERABILITY SCANNER
-Used to scan xss,sqli,cmdi vulnerabilities 
+Developed a Python-based Web Vulnerability Scanner that automates the detection of common web vulnerabilities like SQL Injection and XSS. 
