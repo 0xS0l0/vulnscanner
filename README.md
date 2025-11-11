@@ -1,2 +1,2 @@
 # WEB VULNERABILITY SCANNER
-Developed a Python-based Web Vulnerability Scanner that automates the detection of common web vulnerabilities like SQL Injection and XSS. 
+Designed and developed a lightweight automated web vulnerability scanner to identify common flaws such as SQL Injection (SQLi) and Cross-Site Scripting (XSS). Integrated custom payloads, request/response analysis, and reporting modules to streamline vulnerability detection. Enhanced testing efficiency by automating payload execution and log correlation, reducing manual testing effort by nearly 20 hours per month. Strengthened understanding of web security mechanisms and input validation techniques through real-world testing scenarios.
