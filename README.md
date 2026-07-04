@@ -1,3 +1,7 @@
+<!--
+30 78 73 6F 6C 6F
+-->
+
 # 🛡️ Web Vulnerability Scanner
 
 A lightweight **Python-based Web Vulnerability Scanner** with an interactive **Flask web interface** designed to automate the detection of common web application security vulnerabilities.
